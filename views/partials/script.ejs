@@ -1,5 +1,32 @@
 <script>
+
     const socket = io()
+
+    /* Agrego evento en boton guardar para cargar producto nuevo */
+    let botonGuardar = document.getElementById('btnGuardar')
+        botonGuardar.addEventListener('click', (e)=>{
+            /* funcion para guardar producto nuevo */
+            e.preventDefault()
+            if(document.getElementById('title').value !== ""
+                && document.getElementById('price').value !== ""
+                && document.getElementById('thumbnail').value !== ""){
+
+                    newProduct = {
+                    title: document.getElementById('title').value,
+                    price: document.getElementById('price').value,
+                    thumbnail: document.getElementById('thumbnail').value,
+                    }
+                    console.log(newProduct)
+
+                    /* Envio producto nuevo al servidor*/
+                    socket.emit('newProduct', newProduct)
+
+                    document.getElementById('title').value = ''
+                    document.getElementById('price').value = ''
+                    document.getElementById('thumbnail').value = ''
+                }
+                
+        })
 
     /* Escucho la lista de productos */
     socket.on('products', res => {

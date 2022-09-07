@@ -2,87 +2,81 @@
 import express from 'express'
 import { Server as HttpServer }  from 'http'
 import { Server as IOServer } from 'socket.io'
-import { createManyProducts } from './mocks/productosMocks.js'
 import { productosDao , mensajesDao } from './daos/index.js'
-import { normalizador , desnormalizador } from './myNormalizr/myNormalizr.js'
 import { ContenedorMemoria } from './container/ContenedorMemoria.js'
-import util from 'util'
+import { createManyProducts } from './mocks/productosMocks.js'
+import { webAuth, apiAuth } from '../src/auth/index.js'
+
+import session from 'express-session'
+import MongoStore from 'connect-mongo'
+
+
 
 const app = express()
 const httpServer = new HttpServer(app)
 const io = new IOServer(httpServer)
 
 
-function print(objeto){           // para imprimir en consola objetos normalizados
-    console.log(util.inspect(objeto, false, 12, true))
-}
-
-await mensajesDao.borrarTodo()
-
-const norm = normalizador([])
-const desnorm = desnormalizador(norm)
-const hola = await mensajesDao.guardar(norm)
-const idChat = hola.id
-
-console.log('-----------------------hola-------------------')
-console.log(norm)
-console.log(hola)
-
-console.log('----------------------------------mensajes Normalizados----------------------------------')
-print(norm)
-console.log('-----------------------------------------------------------------------')
-
-
-console.log('----------------------------------mensajes Desnormalizados----------------------------------')
-print(desnorm)
-console.log('-----------------------------------------------------------------------')
 
 
 
-const mensajesMemoria = new ContenedorMemoria()
+/* var bodyParser = require('body-parser');
+var multer = require('multer'); // v1.0.5
+var upload = multer(); // for parsing multipart/form-data */
 
 
-
-
+app.use(express.json())
+app.use(express.urlencoded({extended: true}))
 //------------------Configuracion EJS---------------------------------//
 app.set('views', './views')
 app.set('view engine', 'ejs')
 
 
-app.get('/api/productos-test', (req, res) => {
-    res.render('pages/index')
+const advancedOptions = { useNewUrlParser: true , useUnifiedTopology: true}
+
+app.use(session({
+    // store: MongoStore.create({ mongoUrl: config.mongoLocal.cnxStr }),
+    store: MongoStore.create(
+        {
+            mongoUrl:'mongodb+srv://admin:admin456@22mocksynormalizacion.xj8iwvr.mongodb.net/test',
+            mongoOptions: advancedOptions
+        }),
+    secret: 'shhhhhhhhhhhhhhhhhhhhh',
+    resave: false,
+    saveUninitialized: false,
+    rolling: true,
+    cookie: {
+        maxAge: 60000
+    }
+}))
+
+
+app.get('/index', apiAuth , (req, res) => {
+    res.render('pages/index',{nombre: req.session.nombre})
+})
+
+app.get('/login' , (req, res) => {
+    res.render('pages/login')
+})
+
+app.post('/login', (req, res) => {
+    req.session.nombre = req.body.name
+    console.log(req.session.nombre)
+    res.redirect('/index')
 })
 
 
 
-//-----------Containers Knex para Bases de Datos MySQL y SQLite3-----------//
+const mensajesMemoria = new ContenedorMemoria()          // Instancio contendor de mensajes en memoria
 
-import { optionMySQL , optionSQLite } from "./options/options.js";
-import { ContainerDB } from "./container/container.js";
-
-const containerProducts = new ContainerDB(optionMySQL)
-const containerMessages = new ContainerDB(optionSQLite)
+await mensajesDao.borrarTodo()                           // Borro los mensajes guardados en mongoDB
+await productosDao.borrarTodo();                         // Booro los productos guardados en mongoDB
 
 
-const pp = await productosDao.borrarTodo()
-console.log('-------------------pp-------------------')
-//console.log(pp)
-
-
-
-const prod = createManyProducts(5)       // Mockeo 5 productos
+const prod = createManyProducts(5)                       // Mockeo 5 productos
 prod.forEach(elem => {
     productosDao.guardar(elem)
 })
-
-//const mens = createManyMesagges(5)       // Mockeo 10 mensajes
-//console.log(mens)
-
-await containerProducts.newTable()           // Creo tabla porducts
-await containerMessages.newTable()           // Creo tabla messages
-await containerProducts.save(prod)           // Guardo porductos en tabla products
-//console.log(await productosDao.listarAll())
-
 
 //--------------------------Websockets----------------------------//
 
@@ -103,25 +97,8 @@ io.on('connection', async (socket) => {
     /* Escucho el nuevo mensaje de chat enviado por el cliente y se los propago a todos */
     socket.on('newMessage', async (res) =>{
         mensajesMemoria.guardar(res)
-        const normi = normalizador(mensajesMemoria.listarAll())
-        await mensajesDao.actualizar(idChat, normi)
-        const normiListado = await mensajesDao.listar(idChat)
-        const desnormiReal = desnormalizador({entities: normiListado[0].entities , result: 'mensajes'})
-
+        await mensajesDao.guardar(res)
         io.sockets.emit('messages', mensajesMemoria.listarAll())
-
-        console.log('------------------------------(normiListado)-------------------------------')
-        console.log(normiListado[0].entities.chat.mensajes[0].chat)
-        //console.log(normiListado[0].result)
-        //console.log(normiListado[0].entities)
-        console.log('------------------------------------------------------------------------------')
-
-        console.log('------------------------------normi-------------------------------')
-        console.log(normi.entities.chat.mensajes.chat)
-       /*  console.log(desnormi[0])
-        console.log(desnormi[0].entities.chat.mensajes[0].chat) */
-        console.log('------------------------------------------------------------------------------')
-
     })
 })
 

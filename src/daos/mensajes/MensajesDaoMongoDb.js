@@ -3,7 +3,7 @@ import ContenedorMongoDb from "../../container/ContenedorMongoDb.js";
 
 class MensajesDaoMongoDb extends ContenedorMongoDb{
     constructor(){
-        super('Mensajes', /* {
+        super('Mensajes', {
             author: {
                 email: {type: String, required: true},
                 nombre: {type: String, required: true},
@@ -12,15 +12,15 @@ class MensajesDaoMongoDb extends ContenedorMongoDb{
                 alias: {type: String, required: true},
             },
             text: {type: String, required: true},
-        }) */
-        {
+        })
+        /* {
             entities: {
                 chat: {
                     mensajes: {type: [], required: true}
                 }
             },
             result: { type: String, require: true,}
-        })
+        }) */
     }
 }
 export default MensajesDaoMongoDb
