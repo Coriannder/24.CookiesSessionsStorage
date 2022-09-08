@@ -1,33 +1,11 @@
 <script>
 
     /* Agrego evento en boton logout  */
-    let botonLogin = document.getElementById('btnLogout')
-        botonlogin.addEventListener('click', e => {
+    let botonLogout = document.getElementById('btnLogout')
+        botonLogout.addEventListener('click', e => {
             /* funcion para desloguear nombre */
-            fetch
-
-
-
-
-            const name = document.getElementById('name').value
-            console.log(name)
-            if(name){
-                    console.log(name)
-                    document.getElementById('name').value = ''
-            } else {
-                document.getElementById('name').placeHolder = 'Ingrese un nombre'
-                document.getElementById('name').focus()
-            }
-
-            fetch('/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: {
-                    demo: 'lolo',
-                   }
-                }).catch(err => console.log(err))
+            fetch('http://localhost:8080/logout')
+            .then(res => console.log('fetch ok'))
                /*  .then(response => response.json())
                 .then(json => console.log(json))
                 .catch(err => console.log(err)); */

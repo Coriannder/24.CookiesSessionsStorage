@@ -17,14 +17,6 @@ const httpServer = new HttpServer(app)
 const io = new IOServer(httpServer)
 
 
-
-
-
-/* var bodyParser = require('body-parser');
-var multer = require('multer'); // v1.0.5
-var upload = multer(); // for parsing multipart/form-data */
-
-
 app.use(express.json())
 app.use(express.urlencoded({extended: true}))
 //------------------Configuracion EJS---------------------------------//
@@ -46,14 +38,9 @@ app.use(session({
     saveUninitialized: false,
     rolling: true,
     cookie: {
-        maxAge: 60000
+        maxAge: 6000
     }
 }))
-
-
-app.get('/index', apiAuth , (req, res) => {
-    res.render('pages/index',{nombre: req.session.nombre})
-})
 
 app.get('/login' , (req, res) => {
     res.render('pages/login')
@@ -61,9 +48,29 @@ app.get('/login' , (req, res) => {
 
 app.post('/login', (req, res) => {
     req.session.nombre = req.body.name
-    console.log(req.session.nombre)
+    console.log(req.session)
     res.redirect('/index')
 })
+
+app.get('/index', apiAuth , (req, res) => {
+    res.render('pages/index',{nombre: req.session.nombre})
+})
+
+app.get('/logout', apiAuth , (req, res) => {
+    console.log('Estas en ruta /logout')
+    res.render('pages/logout', { nombre : req.session.nombre})
+    req.session.destroy()
+})
+
+/* app.get('/index/logout', apiAuth , (req, res) => {
+    if(req.session.nombre){
+        res.redirect('/logout', { nombre: req.session.nombre })
+        req.session.destroy()
+    } else {
+        res.redirect('login')}
+}) */
+
+
 
 
 
